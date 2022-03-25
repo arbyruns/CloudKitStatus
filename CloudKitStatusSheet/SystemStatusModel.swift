@@ -5,11 +5,6 @@
 //  Created by robevans on 3/24/22.
 //
 
-// This file was generated from JSON Schema using quicktype, do not modify it directly.
-// To parse the JSON, add this file to your project and do:
-//
-//   let systemStatus = try? newJSONDecoder().decode(SystemStatus.self, from: jsonData)
-
 import Foundation
 
 // MARK: - SystemStatus
@@ -70,13 +65,27 @@ struct Event: Codable, Identifiable {
 class SystemStatusModel: ObservableObject {
 
     @Published var systemStatusData: [SystemStatus] = []
+    
     @Published var showErrorAlert = false
     @Published var errorMessage = ""
 
-//    let systemStatusURL = "https://www.apple.com/support/systemstatus/data/system_status_en_US.js"
-    let systemStatusURL = "https://www.apple.com/support/systemstatus/data/developer/system_status_en_US.js"
-    
-    func fetchSystemStatus() async -> [SystemStatus] {
+    var systemStatusURL = "https://www.apple.com/support/systemstatus/data/developer/system_status_en_US.js"
+
+
+    /// Used to fetch the systemStatus of either developer tools and resources or public endpoints.
+    /// - Parameter urlType: Use 0 for developer features such as cloudkit, xCode Clouod, etc. Use 1 for system status for public facing sites suchas  Apple Books, App Store, Apple Music, etc
+    /// - Returns: Returns system status information
+    func fetchSystemStatus(_ urlType: Int) async -> [SystemStatus] {
+
+        switch urlType {
+
+        case 0:
+            systemStatusURL = "https://www.apple.com/support/systemstatus/data/developer/system_status_en_US.js" // This is the URL for developer features such as cloudkit, xCode Clouod, etc
+        default:
+            systemStatusURL = "https://www.apple.com/support/systemstatus/data/system_status_en_US.js" // this is the URL for system status for public facing sites suchas   Apple Books, App Store, Apple Music, etc
+
+        }
+
         guard let url = URL(string: systemStatusURL) else {
             return []
         }
@@ -84,22 +93,28 @@ class SystemStatusModel: ObservableObject {
         do {
             let (data, response) = try await URLSession.shared.data(from: url)
 
-            // This is commented out data to try and gather developer system status
-            var dataString = String(data: data, encoding: .utf8)
-            dataString = dataString?.replacingOccurrences(of: "jsonCallback(", with: "")
-            dataString = dataString?.replacingOccurrences(of: ");", with: "")
-            let json = dataString?.data(using: .utf8)
-
             guard (response as? HTTPURLResponse)?.statusCode == 200 else {
                 print("\(#function) \(response)")
                 return []
             }
 
-            let statusData = try JSONDecoder().decode(SystemStatus.self, from: Data(json!))
+            /* The developer URL returns jsonCallback( and ends with )
+             so the return payload needs to have that removed before use
+             */
+            if urlType == 0 {
+                var dataString = String(data: data, encoding: .utf8)
+                dataString = dataString?.replacingOccurrences(of: "jsonCallback(", with: "")
+                dataString = dataString?.replacingOccurrences(of: ");", with: "")
+                let json = dataString?.data(using: .utf8)
+                let statusData = try JSONDecoder().decode(SystemStatus.self, from: Data(json!))
+                return [statusData]
+            }
+
+            let statusData = try JSONDecoder().decode(SystemStatus.self, from: data)
             return [statusData]
         } catch {
             showErrorAlert = true
-            errorMessage = ("Error: \(error.localizedDescription) Please contact support if this continues.")
+            errorMessage = ("Error: \(error.localizedDescription)")
             print("\(#function) \(error)")
             return []
         }

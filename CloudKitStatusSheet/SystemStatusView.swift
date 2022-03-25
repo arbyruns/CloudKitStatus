@@ -22,6 +22,7 @@ struct SystemStatusView: View {
                             Divider()
                                 .padding(.horizontal)
                             ForEach(systemStatus.systemStatusData.first?.services ?? []) { status in
+                                // update "Cloud" with desired information
                                 if status.serviceName.contains("Cloud") {
                                     CloudKitStatusCardView(geo: geo, status: status)
                                 }
@@ -29,7 +30,7 @@ struct SystemStatusView: View {
                             Spacer()
                         }
                         .task {
-                            systemStatus.systemStatusData = await systemStatus.fetchSystemStatus()
+                            systemStatus.systemStatusData = await systemStatus.fetchSystemStatus(0)
                     }
                     }
                 }
