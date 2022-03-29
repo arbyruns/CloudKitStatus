@@ -10,8 +10,8 @@ Simple app that fetches Apple status information, currently configured to captur
 
 ![image](https://user-images.githubusercontent.com/2520545/160118846-36be2d7d-9767-4b68-aa85-6ee537ce0bcd.png)
 
-Author
+# Author
 Rob Evans, robert.evansii@gmail.com
 
-License
+# License
 CloudKitStatus is available under the MIT license. See the LICENSE file for more info.
